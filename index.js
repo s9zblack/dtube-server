@@ -47,4 +47,4 @@ app.use('/comment',CommentRoute)
 
 const PORT = process.env.PORT || 5098;
 
-app.listen(PORT, () => console.log(`Server start on port ${PORT}`));
+app.listen(PORT, () => console.log(`Server start on port ${PORT} a`));
