@@ -1,5 +1,5 @@
 const Video = require("../models/Video");
-const User = require('../models/User')
+const User = require("../models/User");
 
 const addVideo = async (req, res) => {
   const userId = req.userId;
@@ -63,7 +63,11 @@ const getVideoById = async (req, res) => {
     return res.status(404).json({ success: false, message: "Missing id" });
   }
   try {
-    const videos = await Video.find({ userId: id }).skip(skip).limit(limit);
+    const videos = await Video.find({ userId: id })
+      .skip(skip)
+      .limit(limit)
+      .populate("userId")
+      .sort("-createdAt");
     return res.json({ success: true, videos });
   } catch (err) {
     return res.status(500).json({ success: false, message: "Internal server" });
@@ -113,24 +117,24 @@ const addLikeVideo = async (req, res) => {
   const idVideo = req.params.id;
   try {
     const video = await Video.findOne({ _id: idVideo });
-    const didLike = video.likes.some(item => item === userId);
-    const didDislike = video.dislikes.some(item => item === userId);
+    const didLike = video.likes.some((item) => item === userId);
+    const didDislike = video.dislikes.some((item) => item === userId);
 
-    if(!didDislike  && !didLike) // chưa like chưa dislike
-    {
-      console.log('chưa like, chưa dislike');
-      await Video.updateOne({_id:idVideo},{$push:{likes:userId}});
+    if (!didDislike && !didLike) {
+      // chưa like chưa dislike
+      console.log("chưa like, chưa dislike");
+      await Video.updateOne({ _id: idVideo }, { $push: { likes: userId } });
       //console.log(ab);
-      console.log('ac');
-      const rq = await Video.findOne({_id:idVideo})
-      console.log('Find one');
-      return res.json({success:true, video:rq});
+      console.log("ac");
+      const rq = await Video.findOne({ _id: idVideo });
+      console.log("Find one");
+      return res.json({ success: true, video: rq });
     }
 
-    if(!didDislike && didLike) // chưa dislikes, đã likes
-    {
-      console.log('chưa dislikes, đã like');
-      const newLikes = video.likes.filter(item => item !== userId);
+    if (!didDislike && didLike) {
+      // chưa dislikes, đã likes
+      console.log("chưa dislikes, đã like");
+      const newLikes = video.likes.filter((item) => item !== userId);
       const newUpdate = {
         _id: video._id,
         video: video.video,
@@ -138,37 +142,40 @@ const addLikeVideo = async (req, res) => {
         title: video.title,
         desc: video.desc,
         type: video.type,
-        likes:newLikes.length > 0 ? newLikes : [],
-        dislikes:video.dislikes
-      }
-      console.log('new Update');
-      const rq = await Video.findOneAndUpdate({_id:idVideo},newUpdate,{new:true});
-      console.log('gọi db');
-      return res.json({success:true, video:rq});
+        likes: newLikes.length > 0 ? newLikes : [],
+        dislikes: video.dislikes,
+      };
+      console.log("new Update");
+      const rq = await Video.findOneAndUpdate({ _id: idVideo }, newUpdate, {
+        new: true,
+      });
+      console.log("gọi db");
+      return res.json({ success: true, video: rq });
     }
 
-    if(didDislike && !didLike) // đã didsslikes, chưa likes
-    {
-      console.log('đã dislike, chưa like');
+    if (didDislike && !didLike) {
+      // đã didsslikes, chưa likes
+      console.log("đã dislike, chưa like");
       //remove dislike,
       //adđ like
-      const newDislikes = video.dislikes.filter(item => item !== userId);
-      const newUpdate ={
+      const newDislikes = video.dislikes.filter((item) => item !== userId);
+      const newUpdate = {
         _id: video._id,
         video: video.video,
         image: video.image,
         title: video.title,
         desc: video.desc,
         type: video.type,
-        likes:video.likes,
-        dislikes:newDislikes.length > 0 ? newDislikes : []
-      }
-      const ab = await Video.findOneAndUpdate({_id:idVideo},newUpdate,{new:true});
-      await Video.updateOne({_id:idVideo},{$push:{likes:userId}});
-      const rq = await Video.findOne({_id:idVideo})
-      return res.json({success:true, video:rq});
+        likes: video.likes,
+        dislikes: newDislikes.length > 0 ? newDislikes : [],
+      };
+      const ab = await Video.findOneAndUpdate({ _id: idVideo }, newUpdate, {
+        new: true,
+      });
+      await Video.updateOne({ _id: idVideo }, { $push: { likes: userId } });
+      const rq = await Video.findOne({ _id: idVideo });
+      return res.json({ success: true, video: rq });
     }
-   
   } catch (err) {
     return res.status(500).json({ success: false, message: "Internal server" });
   }
@@ -209,13 +216,13 @@ const disLikeVideo = async (req, res) => {
         desc: video.desc,
         type: video.type,
         likes: newLikes.length > 0 ? newLikes : [],
-        dislikes:video.dislikes
+        dislikes: video.dislikes,
       };
       const ab = await Video.findOneAndUpdate({ _id: idVideo }, newUpdate, {
         new: true,
       });
-      await Video.updateOne({_id:idVideo},{$push:{dislikes:userId}})
-      const rq = await Video.findOne({_id:idVideo})
+      await Video.updateOne({ _id: idVideo }, { $push: { dislikes: userId } });
+      const rq = await Video.findOne({ _id: idVideo });
       return res.json({ success: true, video: rq });
     }
 
@@ -242,38 +249,111 @@ const disLikeVideo = async (req, res) => {
   }
 };
 
-const addView = async(req, res) => {
+const addView = async (req, res) => {
   const idVideo = req.params.id;
-  try{
-    const video = await Video.findOne({_id:idVideo});
-    if(video)
-    {
+  try {
+    const video = await Video.findOne({ _id: idVideo });
+    if (video) {
       video.view += 1;
       await video.save();
-      return res.json({success:true, video:video})
+      return res.json({ success: true, video: video });
     }
-    return res.status(404).json({success:false, message:'Not found video'})
-    
-  }catch(err)
-  {
-    return res.json({success:false, message:'Internal server'})
+    return res.status(404).json({ success: false, message: "Not found video" });
+  } catch (err) {
+    return res.json({ success: false, message: "Internal server" });
   }
-}
+};
 
-
-const getVideoPlayList = async(req,res) => {
+const getVideoPlayList = async (req, res) => {
   const userId = req.userId;
-  try{
-    const videosUser = await User.findOne({_id:userId});
-    console.log(videosUser);
-    const videos = await Video.find({_id:{$in:videosUser.videos}}).populate('userId');
-    return res.json({success:true, video:videos})
-  }catch(err)
-  {
-    return res.json({success:false, message:'Internal server'})
+  const limit = 8;
+  const page = req.query.page || 1;
+  const skip = (page - 1) * limit;
+  try {
+    const videosUser = await User.findOne({ _id: userId });
+    const videos = await Video.find({
+      _id: { $in: videosUser.videos },
+    })
+      .populate("userId")
+      .limit(limit)
+      .skip(skip);
+    return res.json({ success: true, videos: videos });
+  } catch (err) {
+    return res.json({ success: false, message: "Internal server" });
   }
-}
+};
 
+const getVideoLikeByToken = async (req, res) => {
+  const userId = req.userId;
+  const limit = 8;
+  const page = req.query.page || 1;
+  const skip = (page - 1) * limit;
+
+  try {
+    const videos = await Video.find()
+      .populate("userId")
+      .limit(limit)
+      .skip(skip);
+    const videoReturn = videos.filter((item) => item.likes.includes(userId));
+
+    return res.json({ success: true, videos: videoReturn });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
+
+const getVideoSubscription = async (req, res) => {
+  const userId = req.userId;
+  const limit = 8;
+  const page = req.query.page || 1;
+  const skip = (page - 1) * limit;
+  try {
+    const users = await User.find();
+    const userFollow = users.filter((item) => item.follows.includes(userId));
+    const videoReturn = await Video.find({
+      userId: { $in: userFollow },
+    })
+      .populate("userId")
+      .limit(limit)
+      .skip(skip);
+
+    return res.json({ success: true, videos: videoReturn });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
+
+const getVideoPopular = async (req, res) => {
+  const limit = 8;
+  const page = req.query.page || 1;
+  const skip = (page - 1) * limit;
+  try {
+    const videoReturn = await Video.find()
+      .sort("-view")
+      .populate("userId")
+      .limit(limit)
+      .skip(skip);
+    return res.json({ success: true, videos: videoReturn });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
+
+const getVideoShort = async (req, res) => {
+  const limit = 2;
+  const page = req.query.page || 1;
+  const skip = (page - 1) * limit;
+  try {
+    const videoReturn = await Video.find()
+      .sort("-view")
+      .populate("userId")
+      .limit(limit)
+      .skip(skip);
+    return res.json({ success: true, videos: videoReturn });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
 module.exports = {
   addVideo,
   getMyVideo,
@@ -284,5 +364,9 @@ module.exports = {
   disLikeVideo,
   addLikeVideo,
   addView,
-  getVideoPlayList
+  getVideoPlayList,
+  getVideoLikeByToken,
+  getVideoSubscription,
+  getVideoPopular,
+  getVideoShort
 };

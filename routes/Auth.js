@@ -10,7 +10,7 @@ const {
   getFollowById,
   unFollowById,
   addSaveVideo,
-} = require("../Controller/UserController");
+} = require("../controller/UserController");
 // /api/auth
 router.get("/", (req, res) => res.send("Datisekai get auth successfull"));
 
