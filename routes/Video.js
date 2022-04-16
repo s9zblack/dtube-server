@@ -14,6 +14,7 @@ const {
   getVideoSubscription,
   getVideoPopular,
   getVideoShort,
+  getVideoQuery,
 } = require("../controller/VideoController");
 const router = express.Router();
 const isLogin = require("../middleware/isLogin");
@@ -39,8 +40,10 @@ router.get("/videos/playlist", isLogin, getVideoPlayList);
 
 router.get("/videos/playlike", isLogin, getVideoLikeByToken);
 router.get("/videos/subcription", isLogin, getVideoSubscription);
-router.get("/videos/popular", isLogin, getVideoPopular);
+router.get("/videos/popular", getVideoPopular);
 
 router.get("/videos/shorts", getVideoShort);
+
+router.get('/videos/search',getVideoQuery)
 
 module.exports = router;

@@ -122,18 +122,14 @@ const addLikeVideo = async (req, res) => {
 
     if (!didDislike && !didLike) {
       // chưa like chưa dislike
-      console.log("chưa like, chưa dislike");
       await Video.updateOne({ _id: idVideo }, { $push: { likes: userId } });
       //console.log(ab);
-      console.log("ac");
       const rq = await Video.findOne({ _id: idVideo });
-      console.log("Find one");
       return res.json({ success: true, video: rq });
     }
 
     if (!didDislike && didLike) {
       // chưa dislikes, đã likes
-      console.log("chưa dislikes, đã like");
       const newLikes = video.likes.filter((item) => item !== userId);
       const newUpdate = {
         _id: video._id,
@@ -145,17 +141,14 @@ const addLikeVideo = async (req, res) => {
         likes: newLikes.length > 0 ? newLikes : [],
         dislikes: video.dislikes,
       };
-      console.log("new Update");
       const rq = await Video.findOneAndUpdate({ _id: idVideo }, newUpdate, {
         new: true,
       });
-      console.log("gọi db");
       return res.json({ success: true, video: rq });
     }
 
     if (didDislike && !didLike) {
       // đã didsslikes, chưa likes
-      console.log("đã dislike, chưa like");
       //remove dislike,
       //adđ like
       const newDislikes = video.dislikes.filter((item) => item !== userId);
@@ -290,10 +283,7 @@ const getVideoLikeByToken = async (req, res) => {
   const skip = (page - 1) * limit;
 
   try {
-    const videos = await Video.find()
-      .populate("userId")
-      .limit(limit)
-      .skip(skip);
+    const videos = await Video.find().populate("userId");
     const videoReturn = videos.filter((item) => item.likes.includes(userId));
 
     return res.json({ success: true, videos: videoReturn });
@@ -354,6 +344,23 @@ const getVideoShort = async (req, res) => {
     return res.status(500).json({ success: false, message: "Internal server" });
   }
 };
+
+const getVideoQuery = async (req, res) => {
+  const limit = 8;
+  const page = req.query.page || 1;
+  const text = req.query.query;
+  const skip = (page - 1) * limit;
+  try {
+    const searchPattern = new RegExp(text, "i");
+    const videoReturn = await Video.find({ title: searchPattern })
+      .skip(skip)
+      .limit(limit);
+    return res.json({ success: true, videos: videoReturn });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
+
 module.exports = {
   addVideo,
   getMyVideo,
@@ -368,5 +375,6 @@ module.exports = {
   getVideoLikeByToken,
   getVideoSubscription,
   getVideoPopular,
-  getVideoShort
+  getVideoShort,
+  getVideoQuery,
 };

@@ -8,7 +8,9 @@ const UserSchema = new Schema(
     phoneNumber: { type: String },
     role: { type: Number, required:true, default: 1 },
     follows:{type:[String]},
-    videos:{type:[String]}
+    videos:{type:[String]},
+    name:{type:String},
+    avatar:{type:String}
   },
   { timestamps: true }
 );

@@ -1,7 +1,7 @@
 const jwt = require("jsonwebtoken");
 const argon2 = require("argon2");
 const Users = require("../models/User");
-const { findOne, updateOne } = require("../models/User");
+const { findOne, updateOne, findOneAndUpdate } = require("../models/User");
 
 const registerUser = async (req, res) => {
   const { email, password } = req.body;
@@ -116,7 +116,7 @@ const followByUserId = async (req, res) => {
         const follows = curUser.follows.push(id);
         const updateFollow = await Users.findOneAndUpdate(
           { _id: userId },
-          {...curUser,follows},
+          { ...curUser, follows },
           { new: true }
         );
         return res.json({ success: true, user: updateFollow });
@@ -127,7 +127,7 @@ const followByUserId = async (req, res) => {
   }
 };
 
-const unFollowById = async(req, res) => {
+const unFollowById = async (req, res) => {
   const id = req.userId; // id người ấn follow
   const userId = req.params.id; // id người được follow
 
@@ -139,12 +139,12 @@ const unFollowById = async(req, res) => {
         return item === id;
       });
       if (isFound) {
-        const follows = curUser.follows.filter(item => item !== id);
-        console.log(curUser.follows)
-        console.log(follows)
+        const follows = curUser.follows.filter((item) => item !== id);
+        console.log(curUser.follows);
+        console.log(follows);
         const updateFollow = await Users.findOneAndUpdate(
           { _id: userId },
-          { follows:follows.length > 0 ? follows : [] },
+          { follows: follows.length > 0 ? follows : [] },
           { new: true }
         );
         return res.json({ success: true, user: updateFollow });
@@ -153,7 +153,7 @@ const unFollowById = async(req, res) => {
   } catch (err) {
     return res.status(500).json({ success: false, message: "Internal server" });
   }
-}
+};
 
 const getFollowById = async (req, res) => {
   const id = req.userId;
@@ -161,7 +161,7 @@ const getFollowById = async (req, res) => {
   try {
     const user = await Users.findOne({ _id: userId }).select("-password");
     if (user) {
-      return res.json({ success: true, user, id:id });
+      return res.json({ success: true, user, id: id });
     }
     return res.status(400).json({ success: false, message: "Missing" });
   } catch (err) {
@@ -169,30 +169,40 @@ const getFollowById = async (req, res) => {
   }
 };
 
-const addSaveVideo = async(req, res) => {
+const addSaveVideo = async (req, res) => {
   const id = req.params.id;
   const userId = req.userId;
-  try{
-    const curUser = await Users.findOne({_id:userId});
-    if(curUser)
-    {
-      const isFound = curUser.videos.some(item => item === id);
-      if(isFound)
-      {
-        const newVideos = curUser.videos.filter(item => item!==id)
+  try {
+    const curUser = await Users.findOne({ _id: userId });
+    if (curUser) {
+      const isFound = curUser.videos.some((item) => item === id);
+      if (isFound) {
+        const newVideos = curUser.videos.filter((item) => item !== id);
         curUser.videos = newVideos.length > 0 ? newVideos : [];
         await curUser.save();
-      }else{
-        await Users.updateOne({_id:userId},{$push:{videos:id}});
+      } else {
+        await Users.updateOne({ _id: userId }, { $push: { videos: id } });
       }
-      return res.json({success:true, user:curUser})
+      return res.json({ success: true, user: curUser });
     }
-  }catch(err)
-  {
+  } catch (err) {
     return res.status(500).json({ success: false, message: "Internal server" });
   }
-}
+};
 
+const updateUser = async (req, res) => {
+  const userId = req.userId;
+  if (!userId) {
+    return res.status(404).json({ success: false, message: "Incorret token" });
+  }
+  const { name, avatar } = req.body;
+  try {
+    const user = await Users.findOneAndUpdate({ _id: userId }, { name, avatar });
+    return res.json({ success: true, user: user, name, avatar });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
 
 module.exports = {
   registerUser,
@@ -201,5 +211,6 @@ module.exports = {
   followByUserId,
   getFollowById,
   unFollowById,
-  addSaveVideo
+  addSaveVideo,
+  updateUser,
 };

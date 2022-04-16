@@ -10,7 +10,9 @@ const {
   getFollowById,
   unFollowById,
   addSaveVideo,
+  updateUser,
 } = require("../controller/UserController");
+const { route } = require("express/lib/router");
 // /api/auth
 router.get("/", (req, res) => res.send("Datisekai get auth successfull"));
 
@@ -34,4 +36,6 @@ router.put('/unfollow/:id',isLogin,unFollowById)
 router.get('/follow/:id',getFollowById)
 
 router.get('/save/:id',isLogin,addSaveVideo)
+
+router.put('/user',isLogin,updateUser)
 module.exports = router;
