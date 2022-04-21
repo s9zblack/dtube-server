@@ -2,6 +2,7 @@ const jwt = require("jsonwebtoken");
 const argon2 = require("argon2");
 const Users = require("../models/User");
 const { findOne, updateOne, findOneAndUpdate } = require("../models/User");
+const User = require("../models/User");
 
 const registerUser = async (req, res) => {
   const { email, password } = req.body;
@@ -197,9 +198,26 @@ const updateUser = async (req, res) => {
   }
   const { name, avatar } = req.body;
   try {
-    const user = await Users.findOneAndUpdate({ _id: userId }, { name, avatar });
+    if (!avatar) {
+      const user = await Users.findOneAndUpdate({ _id: userId }, { name });
+      return res.json({ success: true, user: user, name });
+    }
+    const user = await Users.findOneAndUpdate(
+      { _id: userId },
+      { name, avatar }
+    );
     return res.json({ success: true, user: user, name, avatar });
   } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
+
+const getInfoById = async (req, res) => {
+  const id = req.params.id;
+  try {
+    const user = await Users.findOne({ _id: id }).select("-password");
+    return res.json({success:true, user})
+  } catch (error) {
     return res.status(500).json({ success: false, message: "Internal server" });
   }
 };
@@ -212,5 +230,5 @@ module.exports = {
   getFollowById,
   unFollowById,
   addSaveVideo,
-  updateUser,
+  updateUser,getInfoById
 };

@@ -1,4 +1,5 @@
 const express = require("express");
+const { route } = require("express/lib/router");
 const {
   getMyVideo,
   addVideo,
@@ -15,6 +16,8 @@ const {
   getVideoPopular,
   getVideoShort,
   getVideoQuery,
+  deleteMyVideo,
+  updateVideo,
 } = require("../controller/VideoController");
 const router = express.Router();
 const isLogin = require("../middleware/isLogin");
@@ -22,6 +25,10 @@ const isLogin = require("../middleware/isLogin");
 router.get("/", isLogin, getMyVideo);
 
 router.get("/:id", getVideoById);
+
+router.delete('/:id',isLogin,deleteMyVideo)
+
+router.put('/:id',isLogin,updateVideo)
 
 router.get("/videos/type", getAllVideo);
 

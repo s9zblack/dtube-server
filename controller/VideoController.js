@@ -1,5 +1,6 @@
 const Video = require("../models/Video");
 const User = require("../models/User");
+const { deleteOne } = require("../models/Video");
 
 const addVideo = async (req, res) => {
   const userId = req.userId;
@@ -361,6 +362,51 @@ const getVideoQuery = async (req, res) => {
   }
 };
 
+const deleteMyVideo = async (req, res) => {
+  const userId = req.userId;
+  const id = req.params.id;
+  if (!userId) {
+    return res.status(400).json({ success: false, message: "Missing token" });
+  }
+  try {
+    const myVideo = await Video.findOne({ _id: id });
+    if (myVideo) {
+      if (myVideo.userId == userId) {
+        await Video.deleteOne({ _id: id });
+        return res.json({ success: true });
+      }
+      return res
+        .status(404)
+        .json({ success: false, message: "The video must be yours" });
+    }
+    return res.status(403).json({ success: false, message: "Not found video" });
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+};
+
+const updateVideo = async(req, res) => {
+  const id = req.params.id;
+  const {title, desc, image} = req.body;
+  try {
+    const myVideo = await Video.findOne({ _id: id });
+   if(myVideo)
+   {
+     if(!image)
+     {
+       const video = await Video.findOneAndUpdate({_id:id},{title, desc},{new:true});
+       return res.json({success:true, video})
+     }else{
+       const video = await Video.findOneAndUpdate({_id:id},{title, desc, image},{new:true})
+       return res.json({success:true, video})
+     }
+   }
+   return res.status(400).json({success:false})
+  } catch (err) {
+    return res.status(500).json({ success: false, message: "Internal server" });
+  }
+}
+
 module.exports = {
   addVideo,
   getMyVideo,
@@ -377,4 +423,6 @@ module.exports = {
   getVideoPopular,
   getVideoShort,
   getVideoQuery,
+  deleteMyVideo,
+  updateVideo
 };

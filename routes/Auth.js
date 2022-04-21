@@ -11,6 +11,7 @@ const {
   unFollowById,
   addSaveVideo,
   updateUser,
+  getInfoById,
 } = require("../controller/UserController");
 const { route } = require("express/lib/router");
 // /api/auth
@@ -28,6 +29,8 @@ router.post("/login", loginUser);
 
 // /api/auth/user
 router.get("/user", isLogin, getInfoUser);
+
+router.get('/user/:id',getInfoById)
 // header token
 
 router.put('/follow/:id',isLogin,followByUserId)
